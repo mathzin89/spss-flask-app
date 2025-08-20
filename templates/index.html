@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cruzador SPSS-like</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Cruzador de Variáveis (estilo SPSS)</h1>
+    <p>Envie um .sav/.zsav (SPSS) ou .csv para começar.</p>
+  </header>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash">
+        {% for msg in messages %}<div>{{ msg }}</div>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main>
+    <form action="/" method="post" enctype="multipart/form-data" class="card">
+      <label for="datafile" class="label">Arquivo de dados</label>
+      <input id="datafile" name="datafile" type="file" accept=".sav,.zsav,.csv" required>
+      <button type="submit">Enviar &gt;</button>
+    </form>
+  </main>
+
+  <footer>
+    <small>Feito com Flask + pandas + pyreadstat</small>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel de Análise - {{ name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <h1>Painel de Análise</h1>
+    <p>Resultados para o arquivo: <strong>{{ name }}</strong></p>
+  </header>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for msg in messages %}
+      <div class="flash">
+        <div>{{ msg }}</div>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <main class="grid">
+    <section class="card" id="config-card">
+      <h2>Configuração</h2>
+      <form method="post" class="stack">
+        <div>
+            <label class="label" for="mode-select">Modo de Análise</label>
+            <select name="mode" id="mode-select">
+              <option value="simple" {% if params.get('mode','simple') == 'simple' %}selected{% endif %}>Variável Simples (Cruzamentos)</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="label" for="targets-select">Variáveis Alvo (Linhas)</label>
+            <select name="targets" id="targets-select" multiple size="8" required>
+              {% for v in vars_list %}
+                <option value="{{ v }}" {% if v in params.get('targets', []) %}selected{% endif %}>
+                  {{ v }}
+                </option>
+              {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="label" for="by-vars-select">Cruzar Por (Colunas)</label>
+            <select name="by_vars" id="by-vars-select" multiple size="8">
+              {% for v in vars_list %}
+                <option value="{{ v }}" {% if v in params.get('by_vars', []) %}selected{% endif %}>
+                  {{ v }}
+                </option>
+              {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="label" for="weight-var-input">Variável de Peso (Opcional)</label>
+            <input name="weight_var" id="weight-var-input" type="text" value="{{ params.get('weight_var','peso') }}">
+        </div>
+
+        <div>
+            <label class="label" for="percent-axis-select">Calcular Percentual Sobre</label>
+            <select name="percent_axis" id="percent-axis-select">
+              <option value="col" {% if params.get('percent_axis','col') == 'col' %}selected{% endif %}>Total da Coluna</option>
+              <option value="row" {% if params.get('percent_axis') == 'row' %}selected{% endif %}>Total da Linha</option>
+              <option value="cell" {% if params.get('percent_axis') == 'cell' %}selected{% endif %}>Total Geral</option>
+            </select>
+        </div>
+        
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="base_weighted" {% if params.get('base_weighted', True) %}checked{% endif %}> Usar base ponderada</label>
+        </div>
+
+        <div>
+            <label class="label" for="filter-expr-input">Filtro de Dados (Opcional)</label>
+            <input name="filter_expr" id="filter-expr-input" type="text" placeholder="ex: regiao == 1 and idade >= 30" value="{{ params.get('filter_expr','') }}">
+        </div>
+        
+        <div>
+            <label class="label" for="decimals-input">Casas Decimais</label>
+            <input name="decimals" id="decimals-input" type="number" step="1" min="0" max="4" value="{{ params.get('decimals', 1) }}">
+        </div>
+
+        <button type="submit">Gerar Tabelas</button>
+      </form>
+
+      {% if tables %}
+      <a class="btn" href="{{ url_for('export_excel', token=token) }}">Exportar para Excel</a>
+      {% endif %}
+    </section>
+
+    <section class="tables">
+      {% if tables %}
+        {% for html in tables %}
+          <div class="card">
+            {{ html|safe }}
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="card muted">
+          <p>Configure as opções e clique em <strong>Gerar Tabelas</strong> para visualizar os resultados.</p>
+        </div>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>
