@@ -1,36 +1,72 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cruzador SPSS-like</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="utf-8" />
+  <title>Painel de Cruzamentos — Upload de base</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b1020; --card:#11162a; --muted:#aab1c6; --fg:#eaf0ff; --bd:#222a45; --accent:#5b8cff; --accent-2:#22d3ee; }
+    *{box-sizing:border-box}
+    body {
+      margin:0;
+      font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,#0b1020,#0d1230 30%,#0b1020);
+      color:var(--fg);
+    }
+    .wrap { max-width: 840px; margin: 40px auto; padding: 0 16px; }
+    .card {
+      background: linear-gradient(180deg, #12183e 0%, #0f1430 100%);
+      border:1px solid var(--bd);
+      border-radius:16px;
+      padding:24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    h1 { margin:0 0 8px; font-size:28px; font-weight:800; }
+    .sub { color:var(--muted); margin-bottom:16px; }
+    .flash {
+      margin:14px 0;
+      padding:10px 12px;
+      background:#2a1f00;
+      border:1px solid #634400;
+      border-radius:10px;
+    }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    input[type="file"]{
+      background:#0c1230; color:var(--fg);
+      border:1px solid var(--bd); border-radius:10px;
+      padding:10px; width:100%;
+    }
+    .btn {
+      appearance:none; border:0; border-radius:10px; padding:10px 14px;
+      color:#0b1020; background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(34,211,238,.25);
+    }
+    .foot { color:var(--muted); margin-top:10px; font-size:12px; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Cruzador de Variáveis (estilo SPSS)</h1>
-    <p>Envie um .sav/.zsav (SPSS) ou .csv para começar.</p>
-  </header>
+  <div class="wrap">
+    <div class="card">
+      <h1>Painel de Cruzamentos</h1>
+      <div class="sub">Envie um arquivo <strong>.sav/.zsav</strong> (SPSS) ou <strong>.csv</strong> para começar.</div>
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="flash">
-        {% for msg in messages %}<div>{{ msg }}</div>{% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash">
+            {% for msg in messages %}{{ msg }}<br>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-  <main>
-    <form action="/" method="post" enctype="multipart/form-data" class="card">
-      <label for="datafile" class="label">Arquivo de dados</label>
-      <input id="datafile" name="datafile" type="file" accept=".sav,.zsav,.csv" required>
-      <button type="submit">Enviar &gt;</button>
-    </form>
-  </main>
+      <form action="{{ url_for('index') }}" method="post" enctype="multipart/form-data">
+        <div class="row">
+          <input type="file" name="datafile" accept=".sav,.zsav,.csv" required autofocus />
+          <button class="btn" type="submit">Enviar &raquo;</button>
+        </div>
+      </form>
 
-  <footer>
-    <small>Feito com Flask + pandas + pyreadstat</small>
-  </footer>
+      <div class="foot">Feito com Flask + pandas + pyreadstat</div>
+    </div>
+  </div>
 </body>
 </html>

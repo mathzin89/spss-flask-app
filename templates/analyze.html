@@ -1,112 +1,205 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Painel de Análise - {{ name }}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <title>Painel de Cruzamentos — {{ name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b1020; --card:#11162a; --muted:#aab1c6; --fg:#eaf0ff; --bd:#222a45; --head:#0f1640; --accent:#5b8cff; --accent-2:#22d3ee; }
+    *{box-sizing:border-box}
+    body { margin:0; font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:linear-gradient(180deg,#0b1020,#0d1230 30%,#0b1020); color:var(--fg); }
+    .wrap { max-width: 1200px; margin: 30px auto; padding: 0 16px; }
+
+    /* header + botão X */
+    .pagehead { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+    .pagehead h2 { margin:0; font-size:26px; font-weight:800; }
+    .subhead { color:var(--muted); font-size:13px; margin-top:4px; }
+    .head-left { display:flex; flex-direction:column; gap:2px; }
+    .icon-btn { text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+                width:34px; height:34px; border-radius:999px; border:1px solid var(--bd);
+                background:#0c1230; color:var(--fg); font-weight:900; font-size:18px; line-height:1; }
+    .icon-btn:hover { background:#1a2149 }
+
+    .muted{ color:var(--muted); font-size:12px; }
+    .card { background: linear-gradient(180deg, #12183e 0%, #0f1430 100%); border:1px solid var(--bd); border-radius:16px; padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px; align-items:end; }
+    label { font-size:13px; font-weight:700; margin-bottom:6px; display:block; }
+    select, input[type="text"], input[type="number"]{
+      width:100%; padding:8px 10px; background:#0c1230; color:var(--fg); border:1px solid var(--bd); border-radius:10px;
+    }
+    .split { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .btn { appearance:none; border:0; border-radius:10px; padding:10px 14px; color:#0b1020; background:linear-gradient(90deg,var(--accent),var(--accent-2)); font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(34,211,238,.25); text-decoration:none; display:inline-block; }
+    .btn.alt { background:#0c1230; color:var(--fg); border:1px solid var(--bd); box-shadow:none; }
+    .actions { display:flex; gap:10px; margin:14px 0 6px; flex-wrap:wrap; }
+    .flash { margin:14px 0; padding:10px 12px; background:#2a1f00; border:1px solid #634400; border-radius:10px; }
+
+    .tbl { margin: 14px 0 22px; border:1px solid var(--bd); border-radius:14px; overflow:auto; background:#0b1233; }
+    table.ctab { border-collapse:separate; border-spacing:0; width:100%; min-width:880px; }
+    .ctab thead th { position: sticky; top: 0; background: var(--head); z-index: 3; }
+    .ctab th, .ctab td { border-bottom:1px solid var(--bd); border-right:1px solid var(--bd); padding:8px 10px; }
+    .ctab th:first-child, .ctab td:first-child { border-left:1px solid var(--bd); }
+    .ctab tr:first-child th { border-top:1px solid var(--bd); }
+    .ctab th.grp { font-weight:800; text-transform:uppercase; letter-spacing:.35px; }
+    .ctab th.col { background:#12193e; }
+    .ctab td.rowlbl, .ctab th.stub { position: sticky; left: 0; background:#0b1233; z-index: 2; }
+    .ctab td.rowlbl { font-weight:700; white-space:nowrap; }
+    .ctab tr:nth-child(odd) td { background: #0d1544; }
+    .ctab tr.base td { background:#0a1337; font-weight:800; }
+    h3.part { margin:8px 0 4px; font-size:16px; font-weight:800; color:#cfe0ff; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Painel de Análise</h1>
-    <p>Resultados para o arquivo: <strong>{{ name }}</strong></p>
-  </header>
-
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      {% for msg in messages %}
-      <div class="flash">
-        <div>{{ msg }}</div>
+  <div class="wrap">
+    <!-- Cabeçalho -->
+    <div class="pagehead">
+      <div class="head-left">
+        <h2>Painel de Cruzamentos</h2>
+        <div class="subhead">
+          Base carregada: <strong>{{ name }}</strong> • {{ vars_list|length }} variáveis • {{ n_rows }} casos
+        </div>
       </div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
+      <a class="icon-btn" href="{{ url_for('reset', token=token) }}"
+         title="Descartar base e carregar outra"
+         onclick="return confirm('Descartar a base atual e voltar ao início?');">×</a>
+    </div>
 
-  <main class="grid">
-    <section class="card" id="config-card">
-      <h2>Configuração</h2>
-      <form method="post" class="stack">
-        <div>
-            <label class="label" for="mode-select">Modo de Análise</label>
-            <select name="mode" id="mode-select">
-              <option value="simple" {% if params.get('mode','simple') == 'simple' %}selected{% endif %}>Variável Simples (Cruzamentos)</option>
-            </select>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">
+          {% for msg in messages %}{{ msg }}<br>{% endfor %}
         </div>
-
-        <div>
-            <label class="label" for="targets-select">Variáveis Alvo (Linhas)</label>
-            <select name="targets" id="targets-select" multiple size="8" required>
-              {% for v in vars_list %}
-                <option value="{{ v }}" {% if v in params.get('targets', []) %}selected{% endif %}>
-                  {{ v }}
-                </option>
-              {% endfor %}
-            </select>
-        </div>
-
-        <div>
-            <label class="label" for="by-vars-select">Cruzar Por (Colunas)</label>
-            <select name="by_vars" id="by-vars-select" multiple size="8">
-              {% for v in vars_list %}
-                <option value="{{ v }}" {% if v in params.get('by_vars', []) %}selected{% endif %}>
-                  {{ v }}
-                </option>
-              {% endfor %}
-            </select>
-        </div>
-
-        <div>
-            <label class="label" for="weight-var-input">Variável de Peso (Opcional)</label>
-            <input name="weight_var" id="weight-var-input" type="text" value="{{ params.get('weight_var','peso') }}">
-        </div>
-
-        <div>
-            <label class="label" for="percent-axis-select">Calcular Percentual Sobre</label>
-            <select name="percent_axis" id="percent-axis-select">
-              <option value="col" {% if params.get('percent_axis','col') == 'col' %}selected{% endif %}>Total da Coluna</option>
-              <option value="row" {% if params.get('percent_axis') == 'row' %}selected{% endif %}>Total da Linha</option>
-              <option value="cell" {% if params.get('percent_axis') == 'cell' %}selected{% endif %}>Total Geral</option>
-            </select>
-        </div>
-        
-        <div class="checkbox-group">
-            <label><input type="checkbox" name="base_weighted" {% if params.get('base_weighted', True) %}checked{% endif %}> Usar base ponderada</label>
-        </div>
-
-        <div>
-            <label class="label" for="filter-expr-input">Filtro de Dados (Opcional)</label>
-            <input name="filter_expr" id="filter-expr-input" type="text" placeholder="ex: regiao == 1 and idade >= 30" value="{{ params.get('filter_expr','') }}">
-        </div>
-        
-        <div>
-            <label class="label" for="decimals-input">Casas Decimais</label>
-            <input name="decimals" id="decimals-input" type="number" step="1" min="0" max="4" value="{{ params.get('decimals', 1) }}">
-        </div>
-
-        <button type="submit">Gerar Tabelas</button>
-      </form>
-
-      {% if tables %}
-      <a class="btn" href="{{ url_for('export_excel', token=token) }}">Exportar para Excel</a>
       {% endif %}
-    </section>
+    {% endwith %}
 
-    <section class="tables">
-      {% if tables %}
-        {% for html in tables %}
-          <div class="card">
-            {{ html|safe }}
+    <!-- Formulário -->
+    <form action="{{ url_for('analyze', token=token) }}" method="post">
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label>Modo</label>
+            <select name="mode" id="mode">
+              <option value="simple" selected>Simples (tabelas largas)</option>
+              <option value="multiple">Múltiplas respostas</option>
+            </select>
+            <div class="muted">BYs são divididos automaticamente em partes se ficarem muito largos.</div>
           </div>
-        {% endfor %}
-      {% else %}
-        <div class="card muted">
-          <p>Configure as opções e clique em <strong>Gerar Tabelas</strong> para visualizar os resultados.</p>
+          <div>
+            <label>Decimais</label>
+            <input type="number" name="decimals" value="{{ params.decimals or 1 }}" min="0" max="4">
+          </div>
+          <div>
+            <label>Eixo do %</label>
+            <select name="percent_axis">
+              <option value="col" {% if params.percent_axis=='col' or not params.percent_axis %}selected{% endif %}>% por coluna</option>
+              <option value="row" {% if params.percent_axis=='row' %}selected{% endif %}>% por linha</option>
+              <option value="all" {% if params.percent_axis=='all' %}selected{% endif %}>% do total</option>
+            </select>
+          </div>
+          <div>
+            <label>Peso</label>
+            <select name="weight_var">
+              <option value="">(sem peso)</option>
+              {% for v in vars_list %}
+                <option value="{{ v }}" {% if params.weight_var == v %}selected{% endif %}>{{ v }}</option>
+              {% endfor %}
+            </select>
+            <div class="muted"><label><input type="checkbox" name="base_weighted" {% if params.base_weighted %}checked{% endif %}> Base ponderada</label></div>
+          </div>
         </div>
-      {% endif %}
-    </section>
-  </main>
+
+        <div style="margin-top:12px;">
+          <label>Filtro (pandas query)</label>
+          <input type="text" name="filter_expr" placeholder="ex.: idade >= 30 and sexo == 1" value="{{ params.filter_expr or '' }}">
+        </div>
+      </div>
+
+      <!-- Seção simples (BYs à esquerda, Targets à direita) -->
+      <div class="card" id="simple-section" style="margin-top:12px;">
+        <div class="split">
+          <!-- BYs ESQUERDA -->
+          <div>
+            <label>Alvo</label>
+            <select name="by_vars" multiple size="14">
+              {% for v in vars_list %}
+                <option value="{{ v }}" {% if params.by_vars and v in params.by_vars %}selected{% endif %}>{{ v }}</option>
+              {% endfor %}
+            </select>
+            <div class="muted">Sem limite. Se ficar largo, dividiremos em “partes”.</div>
+          </div>
+
+          <!-- Targets DIREITA -->
+          <div>
+            <label>Cruzar por:</label>
+            <select name="targets" multiple size="14">
+              {% for v in vars_list %}
+                <option value="{{ v }}" {% if params.targets and v in params.targets %}selected{% endif %}>{{ v }}</option>
+              {% endfor %}
+            </select>
+            <div class="muted">Selecione quantos quiser.</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="submit">Gerar tabelas</button>
+          <a class="btn alt" href="{{ url_for('export_excel', token=token) }}">Exportar Excel</a>
+        </div>
+      </div>
+
+      <!-- Seção múltiplas -->
+      <div class="card" id="multi-section" style="display:none; margin-top:12px;">
+        <div class="grid">
+          <div>
+            <label>Variáveis do conjunto múltiplo</label>
+            <select name="multi_vars" multiple size="12">
+              {% for v in vars_list %}
+                <option value="{{ v }}" {% if params.multi_vars and v in params.multi_vars %}selected{% endif %}>{{ v }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>BY (opcional)</label>
+            <select name="by_var">
+              <option value="">(Total)</option>
+              {% for v in vars_list %}
+                <option value="{{ v }}" {% if params.by_var == v %}selected{% endif %}>{{ v }}</option>
+              {% endfor %}
+            </select>
+            <div class="muted">Valor marcado = <code>selected_value</code> (padrão: 1). Marcação “não-zero” disponível.</div>
+          </div>
+          <div>
+            <label>Valor selecionado</label>
+            <input type="text" name="selected_value" value="{{ params.selected_value or '1' }}">
+            <div class="muted"><label><input type="checkbox" name="treat_nonzero" {% if params.treat_nonzero %}checked{% endif %}> Tratar “não-zero” como marcado</label></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="submit">Gerar tabelas</button>
+          <a class="btn alt" href="{{ url_for('export_excel', token=token) }}">Exportar Excel</a>
+        </div>
+      </div>
+    </form>
+
+    <!-- Tabelas -->
+    <div style="margin-top:12px;">
+      {% for html in tables %}
+        {{ html|safe }}
+      {% endfor %}
+    </div>
+  </div>
+
+  <script>
+    const modeSel = document.getElementById('mode');
+    const simple = document.getElementById('simple-section');
+    const multi  = document.getElementById('multi-section');
+
+    function applyMode(){
+      const m = modeSel.value;
+      if(m === 'multiple'){ simple.style.display='none'; multi.style.display='block'; }
+      else { simple.style.display='block'; multi.style.display='none'; }
+    }
+    modeSel.addEventListener('change', applyMode);
+    applyMode();
+  </script>
 </body>
 </html>
